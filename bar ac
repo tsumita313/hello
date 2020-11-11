@@ -1,0 +1,15 @@
+body{
+  color: grey;
+  font-family: 'Helvetica Neue','Helvetica','Arial','American Typewriter',sans-serif;
+  width: 100%;
+  text-align: center;
+}
+
+footer{
+  background: brown;
+  text-align: right;
+}
+
+.header2{
+  padding-top: 10px;
+}
