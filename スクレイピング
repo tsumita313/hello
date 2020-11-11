@@ -1,0 +1,51 @@
+require 'Nokogiri'
+require 'byebug'
+require 'selenium-webdriver'
+require 'csv'
+
+@driver = Selenium::WebDriver.for :chrome
+@driver.navigate.to"https://loco.yahoo.co.jp/search/?genrecd=0207007&areacd=113000000&sort=hybrid&b=1"#指定したURLに飛ぶ（栃木県）
+sleep 1
+headers =["name","tel","url","SSL"]
+CSV.open('neiru.csv', 'w', write_headers: true) do |csv| csv << headers
+#---------------------------------------------------
+def syutoku
+  @h= Hash.new{|hash, key| hash[key] = []} #1kyeに多くの値を入れられる
+    ary_url = []#URL配列の空宣言
+    cnt=[*0..99]#何回繰り返す？ id番号の検索値の数
+    cnt.each do |cnt|
+      begin #エラーが起こる可能性がある処理
+      url = @driver.find_element(:xpath, '//*[@id="sr"]/div['"#{cnt}"']/div/h3/a')#URL情報を持った要素をurl変数に格納
+      ary_url << url.attribute("href")#↑の要素のhref属性(URL)だけを配列に格納
+      rescue #例外処理※エラーが起きた時の処理
+        puts "xpathないよ"
+      end
+    end
+   ary_url.each do |ary_url|
+     @driver.get(ary_url)
+      document = Nokogiri::HTML(@driver.page_source)#文字を引っ張る際に必要なコード
+      begin
+        @a = document.xpath('//*[@id="placetitle"]').text #会社名を取り出し
+        @b = document.xpath('//*[@id="placetable"]/tbody/tr[1]/td/span').text #TELを取り出し
+        @c = document.xpath('//*[@id="hplnk"]/a').text #URLを取り出し
+      rescue
+        puts "マジかー"
+      end
+      puts "会社名：#{@a}"
+      puts "TEL：#{@b}"
+      puts "URL：#{@c}"
+      CSV.open('neiru.csv', 'a') do |csv|
+        csv << [@a, @b, @c] #1kyeに多くの値を入れられる
+      end
+    end
+  end
+end
+syutoku
+#---------------------------------------------------
+cns = 1#何回繰り返す？ id番号の検索値の数
+while cns < 1001 do
+  cns = cns + 10
+  @driver.navigate.to"https://loco.yahoo.co.jp/search/?genrecd=0207007&areacd=113000000&sort=hybrid&b=#{cns}"#指定したURLに飛ぶ
+  syutoku
+end
+#---------------------------------------------------
